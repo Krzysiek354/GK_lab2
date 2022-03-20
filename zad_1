@@ -1,300 +1,281 @@
-<html><!--
-    This web page does the minimal setup for using mouse events along
-    with 2D canvas graphics.
- --><head>
- <meta charset="UTF-8">
- <title>CS424, Lab 2, Exercise 2</title>
- <style>
-     /* This style section is here to make the canvas more obvious on the
-        page.  It is white on a light gray page background, with a thin
-        black border.  Also, turn off text selection to avoid having
-        selection interfere with mouse action. */
-     body {
-         background-color: #DDDDDD;
-         -webkit-user-select: none; /* turn off text selection  / Webkit */
-         -moz-user-select: none;    /* Firefox */
-         -ms-user-select: none;     /* IE 10  */
-         -o-user-select: none;      /* Opera */
-         user-select: none;
-     }
-     canvas {
-         background-color: white;
-         display: block;
-     }
-     #canvasholder {
-         border:2px solid black;
-         float: left; /* This makes the border exactly fit the canvas. */
-     }
- </style>
- <script>
- 
-     "use strict";  // gives improved error-checking in scripts.
- 
-     var canvas;    // The canvas element on which we will draw.
-     var graphics;  // A 2D graphics context for drawing on the canvas.
-     
-     /**
-      * This function returns a string representing a random RGB color.
-      * The returned string can be assigned as the value of graphics.fillStyle
-      * or graphics.strokeStyle.
-      */
-     function randomColorString() {
-         var r = Math.floor(256*Math.random());
-         var g = Math.floor(256*Math.random());
-         var b = Math.floor(256*Math.random());
-         return "rgb(" + r + "," + g + "," + b + ")";
-     }
-         
-     /**
-      * This function is called in init() to set up mouse event handling
-      * on the canvas.  You can modify the nested functions doMouseDown,
-      * doMouseDrag, and possibly doMouseUp to change the reponse to
-      * mouse events.  As an example, this program does some simple drawing.
-      */
-     function installMouseHandler() {
- 
-         var dragging = false;  // set to true when a drag action is in progress.
-         var startX, startY;    // coordinates of mouse at start of drag.
-         var prevX, prevY;      // previous mouse position during a drag.
-         
-         var colorChoice;  // Integer code for the selected color in the "colorChoide"
-                           // popup menu.  The value is assigned in doMouseDown.
-         var figure;
-         function doMouseDown(evt) {
-                 // This function is called when the user presses a button on the mouse.
-                 // Only the main mouse button will start a drag.
-             if (dragging) {
-                 return;  // if a drag is in progress, don't start another.
-             }
-             if (evt.button != 0) {
-                 return;  // don't respond unless the button is the main (left) mouse button.
-             }
-             var x,y;  // mouse position in canvas coordinates
-             var r = canvas.getBoundingClientRect();
-             x = Math.round(evt.clientX - r.left);  // translate mouse position from screen coords to canvas coords.
-             y = Math.round(evt.clientY - r.top);   // round to integer values; some browsers would give non-integers.
-             dragging = true;  // (this won't be the case for all mousedowns in all programs)
-             if (dragging) {
-                 startX = prevX = x;
-                 startY = prevY = y;
-                 document.addEventListener("mousemove", doMouseMove, false);
-                 document.addEventListener("mouseup", doMouseUp, false);
-             }
-             colorChoice = Number(document.getElementById("colorChoice").value);
-             figure = Number(document.getElementById("figure").value);
-             // TODO: Anything else to do when mouse is first pressed?
-         }
-         
-         function doMouseMove(evt) {
-                 // This function is called when the user moves the mouse during a drag.
-             if (!dragging) {
-                 return;  // (shouldn't be possible)
-             }
-             var x,y;  // mouse position in canvas coordinates
-             var r = canvas.getBoundingClientRect();
-             x = Math.round(evt.clientX - r.left);  
-             y = Math.round(evt.clientY - r.top);
-             
-             /*------------------------------------------------------------*/
-             /* TODO: Add support for more drawing tools. */
-             
-             if ( Math.abs(x-prevX) + Math.abs(y-prevY) < 3 ) {
-                 return;  // don't draw squares too close together
-             }
-                 
-             if (colorChoice == 0) {
-                 graphics.fillStyle = randomColorString();
-             }
-             else if (colorChoice == 1) {
-                 graphics.fillStyle = "red";
-             }
-             else if (colorChoice == 2) {
-                 graphics.fillStyle = "green";
-             }
-             else if (colorChoice == 3) {
-                 graphics.fillStyle = "blue";
-             }
-             else if (colorChoice == 4) {
-                 graphics.fillStyle = "yellow";
-             }
-             if(figure==0){
-             graphics.fillRect(x-20,y-20,40,40);
-             graphics.strokeRect(x-20,y-20,40,40);
-             }
-             else if (figure == 1)
-             {
-                const a = 2 * Math.PI / 6;
-                graphics.beginPath();
-                for (var i = 0; i < 7; i++)
-                graphics.lineTo(x + 25 * Math.cos(a * i), y + 25 * Math.sin(a * i));
-                
-               graphics.fill();
-                graphics.stroke();
-             }
-             /*------------------------------------------------------------*/
-             
-             prevX = x;  // update prevX,prevY to prepare for next call to doMouseMove
-             prevY = y;
-         }
-         
-         function doMouseUp(evt) {
-                 // This function is called when the user releases a mouse button during a drag.
-             if (!dragging) {
-                 return;  // (shouldn't be possible)
-             }
-             dragging = false;
-             document.removeEventListener("mousemove", doMouseMove, false);
-             document.removeEventListener("mouseup", doMouseMove, false);
-          }
-          
-          canvas.addEventListener("mousedown", doMouseDown, false);
- 
-    } // end installMouseHandler
- 
- 
-    /**
-      * This function can be called to add a collection of extra drawing function to
-      * a graphics context, to make it easier to draw basic shapes with that context.
-      * The parameter, graphics, must be a canvas 2d graphics context.
-      *
-      * The following new functions are added to the graphics context:
-      *
-      *    graphics.strokeLine(x1,y1,x2,y2) -- stroke the line from (x1,y1) to (x2,y2).
-      *    graphics.fillCircle(x,y,r) -- fill the circle with center (x,y) and radius r.
-      *    graphics.strokeCircle(x,y,r) -- stroke the circle.
-      *    graphics.fillOval(x,y,r1,r2) -- fill oval with center (x,y) and radii r1 and r2.
-      *    graphics.stokeOval(x,y,r1,r2) -- stroke the oval
-      *    graphics.fillPoly(x1,y1,x2,y2,...) -- fill polygon with vertices (x1,y1), (x2,y2), ...
-      *    graphics.strokePoly(x1,y1,x2,y2,...) -- stroke the polygon.
-      *    graphics.getRGB(x,y) -- returns the color components of pixel at (x,y) as an array of
-      *         four integers in the range 0 to 255, in the order red, green, blue, alpha.
-      *
-      * (Note that "this" in a function that is called as a member of an object refers to that
-      * object.  Here, this will refer to the graphics context.)
-      */
-     function addGraphicsContextExtras(graphics) {
-         graphics.strokeLine = function(x1,y1,x2,y2) {
-            this.beginPath();
-            this.moveTo(x1,y1);
-            this.lineTo(x2,y2);
-            this.stroke();
-         }
-         graphics.fillCircle = function(x,y,r) {
-            this.beginPath();
-            this.arc(x,y,r,0,2*Math.PI,false);
-            this.fill();
-         }
-         graphics.strokeCircle = function(x,y,radius) {
-            this.beginPath();
-            this.arc(x,y,radius,0,2*Math.PI,false);
-            this.stroke();
-         }
-         graphics.fillPoly = function() { 
-             if (arguments.length < 6)
-                return;
-             this.beginPath();
-             this.moveTo(arguments[0],arguments[1]);
-             for (var i = 2; i+1 < arguments.length; i = i + 2) { 
-                this.lineTo(arguments[i],arguments[i+1]);
-             }
-             this.closePath();
-             this.fill();
-         }
-         graphics.strokePoly = function() { 
-             if (arguments.length < 4)
-                return;
-             this.beginPath();
-             this.moveTo(arguments[0],arguments[1]);
-             for (var i = 2; i+1 < arguments.length; i = i + 2) { 
-                this.lineTo(arguments[i],arguments[i+1]);
-             }
-             this.closePath();
-             this.stroke();
-         }
-         graphics.fillOval = function(x,y,horizontalRadius,verticalRadius) {
-            this.save();
-            this.translate(x,y);
-            this.scale(horizontalRadius,verticalRadius);
-            this.beginPath();
-            this.arc(0,0,1,0,2*Math.PI,false);
-            this.restore();
-            this.fill();
-         }
-         graphics.strokeOval = function(x,y,horizontalRadius,verticalRadius) {
-            this.save();
-            this.translate(x,y);
-            this.scale(horizontalRadius,verticalRadius);
-            this.beginPath();
-            this.arc(0,0,1,0,2*Math.PI,false);
-            this.restore();
-            this.stroke();
-         }
-         graphics.getRGB = function(x,y) {
-             var color = this.getImageData(x,y,1,1);
-             return color.data;
-         }
-     }    // end of addGraphicsContextExtras()
-     
-     function doClear(){
-            graphics.clearRect(0, 0, canvas.width, canvas.height); 
-            var w = canvas.width; canvas.width = 1; canvas.width = w; 
+<html><head>
+    <meta charset="UTF-8">
+    <title>CPSC 424, Lab 2, Exercise 1</title>
+    <style>
+        /* This style section is here to make the canvas more obvious on the
+           page.  It is white on a light gray page background, with a thin
+           black border. */
+        body {
+            /* background-color: #DDDDDD; */
         }
-     /**
-      * The init() function is called after the page has been
-      * loaded.  It initializes the canvas and graphics variables,
-      * and it installs mouse and key listeners.  If an error
-      * occurs, a message is displayed in place of the canvas.
-      */
-     function init() {
-         try {
-             canvas = document.getElementById("canvas");
-             graphics = canvas.getContext("2d");
-         } catch(e) {
-             document.getElementById("canvasholder").innerHTML =
-                "<p>Canvas graphics is not supported.<br>" +
-                "An error occurred while initializing graphics.</p>";
-                return;
-         }
-         addGraphicsContextExtras(graphics);
-         installMouseHandler();
-         graphics.fillStyle = "white";
-         graphics.fillRect(0,0,canvas.width,canvas.height);
-         document.getElementById("clearButton").onclick = doClear;
-     }
-     
- </script>
- </head>
- <body onload="init()"> <!-- the onload attribute here is what calls the init() function -->
- 
- <h2>Lab 2, Exercise 2: Mousing</h2>
- <button id="clearButton">Clear</button>
- <noscript>
-     <!-- This message will be shown in the page if JavaScript is not available. -->
- <p>JavaScript is required to use this page.</p>
- </noscript>
- 
- <p><b>Color:</b>
-     <select id="colorChoice">
-         <option value="0">Random</option>
-         <option value="1">Red</option>
-         <option value="2">Green</option>
-         <option value="3">Blue</option>
-         <option value="4">Yellow</option>
-     </select>
- </p>
- <p><b>Figure:</b>
-    <select id="figure">
-        <option value="0">Square</option>
-        <option value="1">Hexagon</option>
-    </select>
-</p>
- 
- <div id="canvasholder">
- <canvas id="canvas" width="800" height="600">
-     <!-- This message is shown on the page if the browser doesn't support the canvas element. -->
- Canvas not supported.
- </canvas>
- </div>
- 
- 
- </body></html>
+        canvas {
+            background-color: rgb(42, 216, 207);
+            display: block;
+        }
+        #canvasholder {
+            border:2px solid black;
+            float: left; /* This makes the border exactly fit the canvas. */
+        }
+    </style>
+    <script>
+    
+        "use strict";  // gives improved error-checking in scripts.
+    
+        var canvas;    // The canvas element on which we will draw.
+        var graphics;  // A 2D graphics context for drawing on the canvas.
+        var pixelSize; // The size of a pixel in the coordinate system; set up by
+                       //    applyWindowToViewportTransform function when it is called.
+        
+        /**
+         *  The draw() function is called by init() after the page loads,
+         *  to draw the content of the canvas.  At the start, clear the canvas
+         *  and save a copy of the state; restore the state at the end.  (These
+         *  actions are not necessary in this program, since the function will
+         *  only be called once.)
+         */
+        function draw() {
+        
+
+            // graphics.beginPath();
+            // graphics.moveTo(75,40);
+            // graphics.bezierCurveTo(75,37,70,25,50,25);
+            // graphics.bezierCurveTo(20,25,20,62.5,20,62.5);
+            // graphics.bezierCurveTo(20,80,40,102,75,120);
+            graphics.beginPath();
+            graphics.moveTo(300,100);
+            graphics.bezierCurveTo(200,37,40,25,100,225);
+            graphics.bezierCurveTo(170,340,250,370,300,400);
+            graphics.bezierCurveTo(350,370,430,340,500,225);
+            graphics.bezierCurveTo(560,25,400,37,300,100);
+            graphics.fillStyle = "red";
+            graphics.fill();
+            graphics.strokeStyle = "black";
+            graphics.stroke();
+            /////////////////////////////////////////////
+            graphics.beginPath();
+            graphics.arc(200, 150, 15, 0, 2 * Math.PI);
+            graphics.fillStyle="white";
+            graphics.fill();
+            graphics.stroke();
+            graphics.beginPath();
+            graphics.arc(200, 150, 10, 0, 2 * Math.PI);
+            graphics.fillStyle="black";
+            graphics.fill();
+            graphics.stroke();
+            graphics.beginPath();
+            graphics.arc(199, 145, 3, 0, 2 * Math.PI);
+            graphics.fillStyle="white";
+            graphics.fill();
+            graphics.stroke();
+            ////////////////////////////////////////////
+            graphics.beginPath();
+            graphics.arc(400, 150, 15, 0, 2 * Math.PI);
+            graphics.fillStyle="white";
+            graphics.fill();
+            graphics.stroke();
+            graphics.beginPath();
+            graphics.arc(400, 150, 10, 0, 2 * Math.PI);
+            graphics.fillStyle="black";
+            graphics.fill();
+            graphics.stroke();
+            graphics.beginPath();
+            graphics.arc(399, 145, 3, 0, 2 * Math.PI);
+            graphics.fillStyle="white";
+            graphics.fill();
+            graphics.stroke();
+            ////////////////////////////////////////////
+            graphics.beginPath();
+            graphics.moveTo(300,300);
+            graphics.bezierCurveTo(280,300,260,290,250,280);
+            graphics.bezierCurveTo(280,320,260,310,300,330);
+            graphics.bezierCurveTo(340,310,320,320,350,280);
+            graphics.bezierCurveTo(340,290,320,300,300,300);
+            graphics.fillStyle = "black";
+            graphics.fill();
+            graphics.strokeStyle = "black";
+            graphics.stroke();
+            //////////////////////////////////////////////
+            graphics.strokeLine(250,280,253,274);
+            graphics.strokeLine(250,280,247,286);
+            graphics.strokeLine(350,280,347,274);
+            graphics.strokeLine(350,280,353,286);
+            ////////////////////////////////////////////////
+            graphics.beginPath();
+            graphics.rect(300, 300, 10, 10);
+            graphics.fillStyle = "white";
+            graphics.fill();
+            graphics.strokeStyle="black";
+            graphics.stroke();
+            graphics.beginPath();
+            graphics.rect(290, 300, 10, 10);
+            graphics.fillStyle = "white";
+            graphics.fill();
+            graphics.strokeStyle="black";
+            graphics.stroke();
+
+
+           } // end of draw()
+        
+        
+        /**
+         * Sets up a transformation in the graphics context so that the canvas will
+         * show x-values in the range from left to right, and y-values in the range
+         * from bottom to top.  If preserveAspect is true, then one of the ranges
+         * will be increased, if necessary, to account for the aspect ratio of the
+         * canvas.  This function sets the global variable pixelsize to be the
+         * size of a pixel in the new coordinate system.  (If preseverAspect is
+         * true, pixelSize is the maximum of its horizontal and vertical sizes.)
+         */
+        function applyWindowToViewportTransformation(left,right,bottom,top,preserveAspect) {
+            var displayAspect, windowAspect;
+            var excess;
+            var pixelwidth, pixelheight;
+            if (preserveAspect) {
+                // Adjust the limits to match the aspect ratio of the drawing area.
+                displayAspect = Math.abs(canvas.height / canvas.width);
+                windowAspect = Math.abs(( top-bottom ) / ( right-left ));
+                if (displayAspect > windowAspect) {
+                    // Expand the viewport vertically.
+                    excess = (top-bottom) * (displayAspect/windowAspect - 1);
+                    top = top + excess/2;
+                    bottom = bottom - excess/2;
+                }
+                else if (displayAspect < windowAspect) {
+                    // Expand the viewport vertically.
+                    excess = (right-left) * (windowAspect/displayAspect - 1);
+                    right = right + excess/2;
+                    left = left - excess/2;
+                }
+            }
+            graphics.scale( canvas.width / (right-left), canvas.height / (bottom-top) );
+            graphics.translate( -left, -top );
+            pixelwidth =  Math.abs(( right - left ) / canvas.width);
+            pixelheight = Math.abs(( bottom - top ) / canvas.height);
+            pixelSize = Math.max(pixelwidth,pixelheight);
+        }  // end of applyWindowToViewportTransformation()
+    
+    
+        /**
+         * This function can be called to add a collection of extra drawing function to
+         * a graphics context, to make it easier to draw basic shapes with that context.
+         * The parameter, graphics, must be a canvas 2d graphics context.
+         *
+         * The following new functions are added to the graphics context:
+         *
+         *    graphics.strokeLine(x1,y1,x2,y2) -- stroke the line from (x1,y1) to (x2,y2).
+         *    graphics.fillCircle(x,y,r) -- fill the circle with center (x,y) and radius r.
+         *    graphics.strokeCircle(x,y,r) -- stroke the circle.
+         *    graphics.fillOval(x,y,r1,r2) -- fill oval with center (x,y) and radii r1 and r2.
+         *    graphics.stokeOval(x,y,r1,r2) -- stroke the oval
+         *    graphics.fillPoly(x1,y1,x2,y2,...) -- fill polygon with vertices (x1,y1), (x2,y2), ...
+         *    graphics.strokePoly(x1,y1,x2,y2,...) -- stroke the polygon.
+         *    graphics.getRGB(x,y) -- returns the color components of pixel at (x,y) as an array of
+         *         four integers in the range 0 to 255, in the order red, green, blue, alpha.
+         *
+         * (Note that "this" in a function that is called as a member of an object refers to that
+         * object.  Here, this will refer to the graphics context.)
+         */
+        function addGraphicsContextExtras(graphics) {
+            graphics.strokeLine = function(x1,y1,x2,y2) {
+               this.beginPath();
+               this.moveTo(x1,y1);
+               this.lineTo(x2,y2);
+               this.stroke();
+            }
+            graphics.fillCircle = function(x,y,r) {
+               this.beginPath();
+               this.arc(x,y,r,0,2*Math.PI,false);
+               this.fill();
+            }
+            graphics.strokeCircle = function(x,y,radius) {
+               this.beginPath();
+               this.arc(x,y,radius,0,2*Math.PI,false);
+               this.stroke();
+            }
+            graphics.fillPoly = function() { 
+                if (arguments.length < 6)
+                   return;
+                this.beginPath();
+                this.moveTo(arguments[0],arguments[1]);
+                for (var i = 2; i+1 < arguments.length; i = i + 2) { 
+                   this.lineTo(arguments[i],arguments[i+1]);
+                }
+                this.closePath();
+                this.fill();
+            }
+            graphics.strokePoly = function() { 
+                if (arguments.length < 4)
+                   return;
+                this.beginPath();
+                this.moveTo(arguments[0],arguments[1]);
+                for (var i = 2; i+1 < arguments.length; i = i + 2) { 
+                   this.lineTo(arguments[i],arguments[i+1]);
+                }
+                this.closePath();
+                this.stroke();
+            }
+            graphics.fillOval = function(x,y,horizontalRadius,verticalRadius) {
+               this.save();
+               this.translate(x,y);
+               this.scale(horizontalRadius,verticalRadius);
+               this.beginPath();
+               this.arc(0,0,1,0,2*Math.PI,false);
+               this.restore();
+               this.fill();
+            }
+            graphics.strokeOval = function(x,y,horizontalRadius,verticalRadius) {
+               this.save();
+               this.translate(x,y);
+               this.scale(horizontalRadius,verticalRadius);
+               this.beginPath();
+               this.arc(0,0,1,0,2*Math.PI,false);
+               this.restore();
+               this.stroke();
+            }
+            graphics.getRGB = function(x,y) {
+                var color = this.getImageData(x,y,1,1);
+                return color.data;
+            }
+        }    // end of addGraphicsContextExtras()
+        
+        /**
+         * The init() funciton is called after the page has been
+         * loaded.  It initializes the canvas and graphics variables.
+         * It calles addGraphicsContextExtras(graphics) to add the extra
+         * drawing functions to the graphics context, and it calls draw()
+         * to draw on the canvas.
+         */
+        function init() {
+            try {
+                canvas = document.getElementById("canvas");
+                graphics = canvas.getContext("2d");
+            } catch(e) {
+                document.getElementById("canvasholder").innerHTML =
+                   "Canvas graphics is not supported.<br>" +
+                   "An error occurred while initializing graphics.";
+            }
+            addGraphicsContextExtras(graphics);
+            draw();  // Call draw() to draw on the canvas.
+        }
+        
+    </script>
+    </head>
+    <body onload="init()"> <!-- the onload attribute here is what calls the init() function -->
+    
+    <h2>CS 424, Lab 2, Exercise 1</h2>
+    
+    <noscript>
+        <!-- This message will be shown in the page if JavaScript is not available. -->
+    <p>JavaScript is required to use this page.</p>
+    </noscript>
+    
+    <div id="canvasholder">
+    <canvas id="canvas" width="600" height="600">
+        <!-- This message is shown on the page if the browser doesn't support the canvas element. -->
+    Canvas not supported.
+    </canvas>
+    </div>
+    
+    
+    
+    </body></html>
